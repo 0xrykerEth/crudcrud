@@ -1,8 +1,9 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     axios
-        .get("https://crudcrud.com/api/cf53c670703b4a31a9b4746b3d1c06b2/book")
+        .get("https://crudcrud.com/api/e9d1de48389c45cfa6f8f9dfb717a604/book")
         .then((result) => {
             const user = result.data;
+            found.innerText = user.length;
             user.forEach((users) => {
                 displayItem(users);
             });
@@ -10,29 +11,24 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch((error) => {
             console.log("Error fetching data: ", error);
         });
+
+    const found = document.getElementById('found');
+    document.getElementById("search").addEventListener("input", searchNotes);
 });
 
 function handleFormSubmit(event) {
     event.preventDefault();
 
-    // Get the values from the title and description fields
-    const title = event.target.title.value.trim();  // Use .trim() to remove extra spaces
+    const title = event.target.title.value.trim();
     const desc = event.target.desc.value.trim();
-
-    // Validate if the title or description is empty
-    if (!title || !desc) {
-        console.log('Empty input detected. Not adding empty note.');
-        return;
-    }
 
     const bookDetails = {
         title: title,
         desc: desc,
     };
 
-    // Send POST request to add new book details
     axios
-        .post("https://crudcrud.com/api/cf53c670703b4a31a9b4746b3d1c06b2/book", bookDetails)
+        .post("https://crudcrud.com/api/e9d1de48389c45cfa6f8f9dfb717a604/book", bookDetails)
         .then((response) => {
             console.log("Note added:", response.data);
             displayItem(response.data);
@@ -41,14 +37,14 @@ function handleFormSubmit(event) {
             console.log("Error adding note:", error);
         });
 
-    // Clear the form fields after adding the note
-    document.getElementById('title').value = '';
-    document.getElementById('desc').value = '';
+    document.getElementById("title").value = '';
+    document.getElementById("desc").value = '';
 }
 
 function displayItem(bookDetails) {
     const userItem = document.createElement('li');
     userItem.classList.add('notItem');
+    userItem.setAttribute('data-title', bookDetails.title.toLowerCase());
 
     const notTitle = document.createElement('h3');
     notTitle.textContent = bookDetails.title;
@@ -62,17 +58,17 @@ function displayItem(bookDetails) {
     deleteBtn.textContent = "Delete";
     deleteBtn.classList.add("delete-btn");
 
-    // Append the delete button and note to the userItem <li>
     userItem.appendChild(deleteBtn);
     const list = document.getElementById("userList");
     list.appendChild(userItem);
 
-    // Add event listener to delete the note when clicked
-    deleteBtn.addEventListener('click', function() {
+    deleteBtn.addEventListener('click', function (event) {
+        event.preventDefault();
         axios
-            .delete(`https://crudcrud.com/api/cf53c670703b4a31a9b4746b3d1c06b2/book/${bookDetails._id}`)
+            .delete(`https://crudcrud.com/api/e9d1de48389c45cfa6f8f9dfb717a604/book/${bookDetails._id}`)
             .then(() => {
-                userItem.remove();  // Remove the <li> element from the list
+                console.log(bookDetails._id);
+                userItem.remove();
             })
             .catch((error) => {
                 console.log("Error deleting note:", error);
@@ -80,4 +76,20 @@ function displayItem(bookDetails) {
     });
 }
 
-module.exports = handleFormSubmit;
+function searchNotes(event) {
+    const searchQuery = event.target.value.toLowerCase();
+    const listItems = document.querySelectorAll("#userList li");
+    let visibleCount = 0;
+
+    listItems.forEach((item) => {
+        const title = item.getAttribute("data-title");
+        if (title.includes(searchQuery)) {
+            item.style.display = "";
+            visibleCount++;
+        } else {
+            item.style.display = "none";
+        }
+    });
+
+    document.getElementById('visible').innerText = visibleCount;
+}
